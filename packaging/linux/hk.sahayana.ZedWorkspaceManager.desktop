@@ -1,0 +1,13 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Zed Workspace Manager
+GenericName=Workspace Database Inspector
+Comment=SQLite workspace inspector and SQL query builder for Zed editor.
+TryExec=zed-workspace-manager
+StartupNotify=true
+Exec=zed-workspace-manager
+Icon=hk.sahayana.ZedWorkspaceManager
+Categories=Utility;Development;Database;
+Keywords=zed;workspace;sqlite;database;sql;
+X-AppImage-Version=0.1.0

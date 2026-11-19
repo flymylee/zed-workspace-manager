@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
+  <defs>
+    <!-- 매트한 다크 배경 그라데이션 -->
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#26282c" />
+      <stop offset="55%" stop-color="#141518" />
+      <stop offset="100%" stop-color="#090a0c" />
+    </linearGradient>
+
+    <!-- 우측 하단으로 자연스럽게 사라지는 페이드 그라데이션 -->
+    <linearGradient id="fadeLine" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.95" />
+      <stop offset="55%" stop-color="#d0d7de" stop-opacity="0.75" />
+      <stop offset="100%" stop-color="#8b949e" stop-opacity="0.12" />
+    </linearGradient>
+
+    <!-- 도구 배지 블루 그라데이션 -->
+    <linearGradient id="badgeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#388bfd" />
+      <stop offset="100%" stop-color="#1f6feb" />
+    </linearGradient>
+  </defs>
+
+  <!-- 1. 스퀘어클(Squircle) 외곽 베이스 -->
+  <rect x="16" y="16" width="224" height="224" rx="54" fill="url(#bgGrad)" stroke="#30363d" stroke-width="4" />
+
+  <!-- 2. Zed 모티프: 3겹 동심 사각 경로 + 대각선 슬래시 -->
+  <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <!-- 바깥쪽 프레임 (좌상단 흰색 -> 우하단 페이드) -->
+    <path d="M 74 120 V 74 H 178" stroke="#f0f6fc" stroke-width="11" />
+    <path d="M 178 74 L 74 178" stroke="#f0f6fc" stroke-width="11" />
+    <path d="M 74 178 L 74 178 H 178 V 132" stroke="url(#fadeLine)" stroke-width="11" />
+
+    <!-- 중간 프레임 -->
+    <path d="M 96 120 V 96 H 156" stroke="#f0f6fc" stroke-width="10" />
+    <path d="M 156 132 V 156 H 104" stroke="url(#fadeLine)" stroke-width="10" />
+
+    <!-- 안쪽 코어 Z -->
+    <path d="M 116 116 V 116 H 136 L 116 136 H 136" stroke="#f0f6fc" stroke-width="9" />
+  </g>
+
+  <!-- 3. 우측 하단 관리 도구 배지 (돋보기) -->
+  <g transform="translate(148, 148)">
+    <!-- 배지 원형 배경 (본체 라인과 깔끔하게 분리되는 테두리 포함) -->
+    <circle cx="44" cy="44" r="44" fill="#0d1117" stroke="#30363d" stroke-width="4" />
+    <circle cx="44" cy="44" r="37" fill="url(#badgeGrad)" />
+
+    <!-- 우측 하단 작은 돋보기 오버레이 (Inspector 상징) -->
+    <g transform="translate(38, 38)">
+      <circle cx="0" cy="0" r="16" fill="#1f6feb" stroke="#ffffff" stroke-width="3.8" />
+      <line x1="12" y1="12" x2="24" y2="24" stroke="#ffffff" stroke-width="4.5" stroke-linecap="round" />
+    </g>
+  </g>
+</svg>

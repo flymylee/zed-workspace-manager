@@ -1,0 +1,102 @@
+#!/bin/sh
+set -u
+
+APPDIR="$(dirname "$(readlink -f "$0")")"
+DESK_ID="hk.sahayana.ZedWorkspaceManager"
+
+# 1. AppImage 내부 바이너리 및 라이브러리 환경변수 설정
+export PATH="$APPDIR/usr/bin:${PATH:-}"
+export LD_LIBRARY_PATH="$APPDIR/usr/lib:$APPDIR/usr/lib64:${LD_LIBRARY_PATH:-}"
+export XDG_DATA_DIRS="$APPDIR/usr/share:${XDG_DATA_DIRS:-/usr/local/share:/usr/share}"
+
+# 2. 누락 라이브러리(ldd) 체크 로직
+app_bin="$APPDIR/usr/bin/zed-workspace-manager"
+if [ -f "$app_bin" ] && command -v ldd >/dev/null 2>&1; then
+  missing="$(ldd "$app_bin" 2>/dev/null | sed -n 's/^[[:space:]]*\(.*\) => not found$/\1/p')"
+  if [ -n "$missing" ]; then
+    echo "Warning: your system is missing libraries that zed-workspace-manager needs:"
+    echo "$missing" | sed 's/^/    /'
+  fi
+fi
+
+# 3. 데스크톱 & 아이콘 자동 등록 (Wayland 아이콘 대응)
+integrate() {
+  case "${ZED_WM_NO_DESKTOP_INTEGRATION:-}" in
+    1 | true | yes) return 0 ;;
+  esac
+
+  appimage="${APPIMAGE:-}"
+  [ -n "$appimage" ] && [ -f "$appimage" ] || return 0
+  appimage="$(readlink -f "$appimage")" || return 0
+
+  case "$appimage" in
+    *[\"\`\$\\%]* | *'
+'*) return 0 ;;
+  esac
+
+  home="${HOME:-}"
+  [ -n "$home" ] || return 0
+  data="${XDG_DATA_HOME:-$home/.local/share}"
+  src_desktop="$APPDIR/usr/share/applications/$DESK_ID.desktop"
+  [ -f "$src_desktop" ] || return 0
+
+  apps="$data/applications"
+  mkdir -p "$apps" 2>/dev/null || return 0
+  external=0
+
+  for f in "$apps"/*.desktop; do
+    if [ ! -f "$f" ] || [ "$f" = "$apps/$DESK_ID.desktop" ]; then
+      continue
+    fi
+    if grep '^Exec=' "$f" 2>/dev/null | grep -Fq "$appimage"; then
+      external=1
+      break
+    fi
+  done
+
+  for f in /usr/local/share/applications/zed-workspace-manager-AM.desktop "$apps/zed-workspace-manager-AM.desktop"; do
+    if [ -f "$f" ]; then
+      external=1
+      break
+    fi
+  done
+
+  if [ "$external" = 1 ]; then
+    if [ -f "$apps/$DESK_ID.desktop" ]; then
+      rm -f "$apps/$DESK_ID.desktop" 2>/dev/null || true
+      command -v update-desktop-database >/dev/null 2>&1 && update-desktop-database "$apps" >/dev/null 2>&1
+    fi
+  else
+    tmp="$apps/.$DESK_ID.tmp.$$"
+    esc="$(printf '%s' "$appimage" | sed 's/[\\&|]/\\&/g')"
+    if sed -e "s|^Exec=.*|Exec=\"$esc\"|" -e '/^TryExec=/d' "$src_desktop" 2>/dev/null >"$tmp"; then
+      if cmp -s "$tmp" "$apps/$DESK_ID.desktop"; then
+        rm -f "$tmp"
+      else
+        if mv -f "$tmp" "$apps/$DESK_ID.desktop" 2>/dev/null; then
+          command -v update-desktop-database >/dev/null 2>&1 && update-desktop-database "$apps" >/dev/null 2>&1
+        else
+          rm -f "$tmp"
+        fi
+      fi
+    else
+      rm -f "$tmp"
+      return 0
+    fi
+  fi
+
+  src_icons="$APPDIR/usr/share/icons/hicolor"
+  [ -d "$src_icons" ] || return 0
+  icons="$data/icons/hicolor"
+  (cd "$src_icons" && find . -type f) | while IFS= read -r rel; do
+    mkdir -p "$icons/$(dirname "$rel")" 2>/dev/null || continue
+    if ! cmp -s "$src_icons/$rel" "$icons/$rel"; then
+      cp "$src_icons/$rel" "$icons/$rel" 2>/dev/null || true
+    fi
+  done
+}
+
+integrate
+
+# 4. 최종 메인 바이너리 실행
+exec "$APPDIR/usr/bin/zed-workspace-manager" "$@"
